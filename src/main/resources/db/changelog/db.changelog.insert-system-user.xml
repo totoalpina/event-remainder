@@ -1,0 +1,19 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <changeSet id="insert-system-user" author="Cosmin Bondoi">
+        <sql>
+            insert into "users" (email, password, first_name, last_name, role)
+            values ('user.system@zegasoftware.com', '', 'User', 'System', 'SYSTEM');
+        </sql>
+        <rollback>
+            <sql>
+                delete from "users" where "role" = 'SYSTEM';
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>
