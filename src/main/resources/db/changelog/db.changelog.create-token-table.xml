@@ -1,0 +1,32 @@
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <changeSet id="create-token-table" author="Cosmin Bondoi">
+        <sql>
+            create sequence  if not exists token_seq start with 1 increment by 1;
+
+            create table tokens (
+            id bigint not null,
+            token_value varchar(255),
+            token_type varchar(15) not null,
+            revoked boolean not null,
+            expired boolean not null,
+            user_id bigint,
+            constraint pk_tokens primary key (id)
+            );
+
+            alter table tokens add constraint uc_tokens_token_value unique (token_value);
+            alter table tokens add constraint fk_tokens_on_user foreign key (user_id) references users (id);
+        </sql>
+        <rollback>
+            <sql>
+                drop table if exists tokens;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

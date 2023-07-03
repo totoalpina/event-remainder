@@ -6,8 +6,8 @@
 
     <changeSet id="insert-system-user" author="Cosmin Bondoi">
         <sql>
-            insert into "users" (email, password, first_name, last_name, role)
-            values ('user.system@zegasoftware.com', '', 'User', 'System', 'SYSTEM');
+            insert into "users" (email, password, first_name, last_name, status, role)
+            values ('user.system@zegasoftware.com', '', 'User', 'System', 'ACTIVE', 'SYSTEM');
         </sql>
         <rollback>
             <sql>
