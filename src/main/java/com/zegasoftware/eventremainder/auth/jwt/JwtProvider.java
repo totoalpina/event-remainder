@@ -39,7 +39,7 @@ public class JwtProvider {
     }
 
     public String generateToken(UserDetails userDetails) {
-        return generateToken("", userDetails);
+        return generateToken(new String(), userDetails);
     }
 
     public String generateToken(String extraClaims, UserDetails userDetails) {

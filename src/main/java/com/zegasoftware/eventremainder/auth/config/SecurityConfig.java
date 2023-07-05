@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -15,7 +16,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.config.annotation.web.configurers.oauth2.server.resource.OAuth2ResourceServerConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,7 +27,11 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.HeaderWriterLogoutHandler;
+import org.springframework.security.web.header.writers.ClearSiteDataHeaderWriter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 import javax.crypto.spec.SecretKeySpec;
 
@@ -50,27 +54,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http.csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(
-                        auth -> auth.requestMatchers("/api/auth/**").permitAll().anyRequest().authenticated())
+                        auth -> auth.requestMatchers("/api/v1/auth/**").permitAll().anyRequest().authenticated())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .logout(logout -> logout.logoutSuccessUrl("/logout"))
+                .logout(logout -> logout.logoutRequestMatcher(new AntPathRequestMatcher("/logout"))
+                        .addLogoutHandler(new HeaderWriterLogoutHandler(
+                                new ClearSiteDataHeaderWriter(ClearSiteDataHeaderWriter.Directive.CACHE,
+                                        ClearSiteDataHeaderWriter.Directive.COOKIES,
+                                        ClearSiteDataHeaderWriter.Directive.STORAGE)))
+                        .deleteCookies("JSESSIONID")
+                        .invalidateHttpSession(true))
+                .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
-                .oauth2ResourceServer(OAuth2ResourceServerConfigurer::jwt)
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(
+                        new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
                 .build();
     }
 
-    @Bean
-    public JwtEncoder jwtEncoder() {
-        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecret.getBytes()));
-    }
-
-    @Bean
-    public JwtDecoder jwtDecoder() {
-        byte[] bytes = jwtSecret.getBytes();
-        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "RSA");
-        return NimbusJwtDecoder.withSecretKey(originalKey).macAlgorithm(MacAlgorithm.HS512).build();
-    }
+//    @Bean
+//    public JwtEncoder jwtEncoder() {
+//        return new NimbusJwtEncoder(new ImmutableSecret<>(jwtSecret.getBytes()));
+//    }
+//
+//    @Bean
+//    public JwtDecoder jwtDecoder() {
+//        byte[] bytes = jwtSecret.getBytes();
+//        SecretKeySpec originalKey = new SecretKeySpec(bytes, 0, bytes.length, "RSA");
+//        return NimbusJwtDecoder.withSecretKey(originalKey).macAlgorithm(MacAlgorithm.HS512).build();
+//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
