@@ -1,0 +1,33 @@
+
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog/1.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog/1.9
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-1.9.xsd">
+
+    <changeSet id="create-refresh-token-table" author="Cosmin Bondoi">
+        <sql>
+
+            create sequence  if not exists refresh_token_seq start with 1 increment by 1;
+
+            create table refresh_tokens (
+            id bigint not null,
+            refresh_token_value varchar(255),
+            token_type varchar(255),
+            user_id bigint,
+            constraint pk_refresh_tokens primary key (id)
+            );
+
+            alter table refresh_tokens add constraint uc_refresh_tokens_refresh_token_value unique (refresh_token_value);
+
+            alter table refresh_tokens add constraint fk_refresh_tokens_on_user foreign key (user_id) references users (id);
+
+        </sql>
+        <rollback>
+            <sql>
+                drop table if exists refresh_tokens;
+            </sql>
+        </rollback>
+    </changeSet>
+
+</databaseChangeLog>

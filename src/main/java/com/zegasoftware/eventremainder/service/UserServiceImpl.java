@@ -56,8 +56,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public boolean activateUser(final Long id) {
-        return false;
+    public Optional<UserDto> findByEmail(final String email) {
+        return userRepository.findByEmail(email).map(userMapper::map);
     }
 
     @Override

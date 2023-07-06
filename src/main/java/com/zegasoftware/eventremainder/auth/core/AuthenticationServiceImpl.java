@@ -1,9 +1,7 @@
 package com.zegasoftware.eventremainder.auth.core;
 
 import com.zegasoftware.eventremainder.auth.jwt.JwtProvider;
-import com.zegasoftware.eventremainder.auth.token.Token;
-import com.zegasoftware.eventremainder.auth.token.TokenRepository;
-import com.zegasoftware.eventremainder.auth.token.TokenType;
+import com.zegasoftware.eventremainder.auth.token.*;
 import com.zegasoftware.eventremainder.model.entity.User;
 import com.zegasoftware.eventremainder.model.enums.UserStatus;
 import com.zegasoftware.eventremainder.repository.UserRepository;
@@ -19,6 +17,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     private final UserRepository userRepository;
     private final TokenRepository tokenRepository;
+    private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProvider jwtService;
     private final UserDetailsService userDetailsService;
     private final AuthenticationManager authenticationManager;
@@ -32,10 +31,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             var userDetails = userDetailsService.loadUserByUsername(request.email());
             String listRoles = user.getRole();
             var jwtToken = jwtService.generateToken(listRoles, userDetails);
+            var refreshToken = jwtService.generateRefreshToken(userDetails);
             revokeAllUserTokens(user);
             saveUserToken(user, jwtToken);
+            RefreshToken refreshTokenEntity = RefreshToken.builder()
+                    .refreshTokenValue(refreshToken)
+                    .user(user)
+                    .build();
+            refreshTokenRepository.deleteByUser(user.getId());
+            refreshTokenRepository.save(refreshTokenEntity);
 
-            return AuthenticationResponse.builder().token(jwtToken).build();
+            return AuthenticationResponse.builder()
+                    .token(jwtToken)
+                    .refreshToken(refreshToken)
+                    .build();
         }
         return AuthenticationResponse.builder().token("").build();
     }
@@ -62,4 +71,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
+
+
 }

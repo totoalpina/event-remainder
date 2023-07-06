@@ -20,22 +20,22 @@ public class Token {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "token_generator")
     @SequenceGenerator(name = "token_generator", sequenceName = "token_seq", allocationSize = 1)
     @Column(name = "id")
-    public Long id;
+    private Long id;
 
     @Column(unique = true, name = "token_value")
-    public String tokenValue;
+    private String tokenValue;
 
     @Column(name = "token_type")
     @Enumerated(EnumType.STRING)
-    public TokenType tokenType = TokenType.BEARER;
+    private TokenType tokenType = TokenType.BEARER;
 
-    public boolean revoked = false;
+    private boolean revoked = false;
 
-    public boolean expired = false;
+    private boolean expired = false;
 
     @ManyToOne
     @JoinColumn(name = "user_id")
-    public User user;
+    private User user;
 
     @Override
     public final boolean equals(final Object o) {
